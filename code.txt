@@ -1,4 +1,12 @@
-valor1:integer;
-valor2:real;
-valor2 := 10.5 + 7;
-if valor1 = valor 1;
+program teste;
+{programa exemplo}
+var 
+    valor1:integer;
+    gram:real;
+begin 
+    valor1:=-10;
+    z:=53;
+    if(z<=20)
+    if(z=20)
+end.
+

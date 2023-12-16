@@ -1,10 +1,9 @@
 #include "Automaton.h"
 #include <fstream>
 
-void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_input, unsigned int &line)
+void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_input, unsigned int &line, unsigned int &counter_char)
 {
-    if (automaton->char_history.find('\n') != std::string::npos)
-        line--;
+    bool has_found = false;
     for (auto c : s)
     {
         if (automaton->char_history.find(c) != std::string::npos && automaton->char_history.size() != 1)
@@ -13,9 +12,16 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
             size_t char_index = automaton->char_history.find(c);
             size_t buffer_size = automaton->char_history.size();
 
-            if (automaton->char_history.size() > 1 && automaton->char_history[0] == ':' && automaton->char_history[1] == '=')
+            std::cout << automaton->char_history << std::endl;
+
+            if (automaton->char_history.size() > 1 &&
+                ((automaton->char_history[0] == ':' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '<' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '>' && automaton->char_history[1] == '=')))
             {
                 rollback = buffer_size - 2;
+            }
+            else if (automaton->char_history[0] == '{')
+            {
+                rollback = buffer_size - automaton->char_history.find('}') - 1;
             }
             else
             {
@@ -27,17 +33,23 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
                 file_input.unget();
                 automaton->char_history.pop_back();
                 automaton->state_history.pop_back();
+                counter_char--;
             }
-            file_input.unget();
+            if (!has_found)
+            {
+                file_input.unget();
+                counter_char--;
+                has_found = true;
+            }
 
             automaton->current_state = automaton->state_history[automaton->state_history.size() - 1];
         }
     }
 }
 
-void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input)
+void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input, unsigned int &counter_char)
 {
-    branch_and_cut(this, ":;+", file_input, line);
+    branch_and_cut(this, ":;+-*/()=<>.{", file_input, line, counter_char);
 
     Type type = Type::NONE;
     for (const auto &pair : this->StateToType)
@@ -573,6 +585,32 @@ void Automaton::switchStateTo(char c)
         goto end;
     }
 
+    // >=
+
+    if (c == '>')
+    {
+        this->current_state = 84;
+        goto end;
+    }
+    else if (this->current_state == 84 && c == '=')
+    {
+        this->current_state = 85;
+        goto end;
+    }
+
+    // <=
+
+    if (c == '<')
+    {
+        this->current_state = 86;
+        goto end;
+    }
+    else if (this->current_state == 86 && c == '=')
+    {
+        this->current_state = 87;
+        goto end;
+    }
+
     // NUMBERS
 
     if ((this->current_state == 0 || this->current_state == 72) && c == '0')
@@ -676,6 +714,53 @@ void Automaton::switchStateTo(char c)
     else if ((this->current_state == 63 || this->current_state == 75) && c == '9')
     {
         this->current_state = 75;
+        goto end;
+    }
+
+    // AND
+
+    if (this->current_state == 0 && c == 'a')
+    {
+        this->current_state = 76;
+        goto end;
+    }
+    else if (this->current_state == 76 && c == 'n')
+    {
+        this->current_state = 77;
+        goto end;
+    }
+    else if (this->current_state == 77 && c == 'd')
+    {
+        this->current_state = 78;
+        goto end;
+    }
+
+    // OR
+
+    if (this->current_state == 0 && c == 'o')
+    {
+        this->current_state = 79;
+        goto end;
+    }
+    else if (this->current_state == 79 && c == 'r')
+    {
+        this->current_state = 80;
+        goto end;
+    }
+
+    // /
+
+    if (this->current_state == 0 && c == '/')
+    {
+        this->current_state = 81;
+        goto end;
+    }
+
+    // MINUS
+
+    if (this->current_state == 0 && c == '-')
+    {
+        this->current_state = 82;
         goto end;
     }
 
