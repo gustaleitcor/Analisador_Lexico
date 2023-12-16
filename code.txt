@@ -1,6 +1,4 @@
-program
-var
-integer
-real
-boolean
-booleanp
+valor1:integer;
+valor2:real;
+valor2 := 10.5 + 7;
+if valor1 = valor 1;
