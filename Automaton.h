@@ -36,7 +36,7 @@ public:
 
     void switchStateTo(char c);
     void stateIsAccepted(int current_state);
-    void analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input, unsigned int &counter_char);
+    void analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input);
     void reset();
 
     // debug

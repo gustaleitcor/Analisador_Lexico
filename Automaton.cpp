@@ -1,7 +1,7 @@
 #include "Automaton.h"
 #include <fstream>
 
-void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_input, unsigned int &line, unsigned int &counter_char)
+void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_input, unsigned int &line)
 {
     bool has_found = false;
     for (auto c : s)
@@ -11,8 +11,6 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
             int rollback = 0;
             size_t char_index = automaton->char_history.find(c);
             size_t buffer_size = automaton->char_history.size();
-
-            std::cout << automaton->char_history << std::endl;
 
             if (automaton->char_history.size() > 1 &&
                 ((automaton->char_history[0] == ':' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '<' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '>' && automaton->char_history[1] == '=')))
@@ -33,12 +31,10 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
                 file_input.unget();
                 automaton->char_history.pop_back();
                 automaton->state_history.pop_back();
-                counter_char--;
             }
             if (!has_found)
             {
                 file_input.unget();
-                counter_char--;
                 has_found = true;
             }
 
@@ -47,9 +43,9 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
     }
 }
 
-void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input, unsigned int &counter_char)
+void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input)
 {
-    branch_and_cut(this, ":;+-*/()=<>.{", file_input, line, counter_char);
+    branch_and_cut(this, ":;+-*/()=<>.{", file_input, line);
 
     Type type = Type::NONE;
     for (const auto &pair : this->StateToType)
@@ -85,7 +81,6 @@ void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, s
         file_output << "REAL " << this->char_history << ' ' << line << std::endl;
         break;
     case Type::COMMENT:
-        std::cout << "COMMENT" << std::endl;
         break;
     case Type::KEYWORD:
         file_output << "KEYWORD " << this->char_history << ' ' << line << std::endl;
@@ -93,7 +88,6 @@ void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, s
 
     case Type::NONE:
     default:
-        std::cout << "NONE" << std::endl;
         break;
     }
 }

@@ -11,28 +11,30 @@ int main()
     std::ofstream file_output("analysed_code.txt");
     Automaton automaton;
     char c;
-    unsigned int line = 0, counter_char = 0, max_counter_char = 0;
+    unsigned int line = 1;
+    bool add_line = false;
 
     while (!file_input.get(c).eof())
     {
 
-        if (c == '\n' && max_counter_char < counter_char)
-        {
-            max_counter_char = counter_char;
-            line++;
-        }
-
-        counter_char++;
-
         if ((c == ' ' || c == '\n') && automaton.current_state != -1)
         {
-            automaton.analyzeHistory(line, file_output, file_input, counter_char);
+            add_line = false;
+            if (c == '\n' && (automaton.char_history.size() == 0 || automaton.char_history.size() == 1))
+                add_line = true;
+
+            automaton.analyzeHistory(line, file_output, file_input);
+
+            if (add_line)
+                line++;
+
             automaton.print_debug_info();
             automaton.reset();
             continue;
         }
 
         automaton.switchStateTo(c);
+        bool did_rollback = false;
     }
 
     return 0;
