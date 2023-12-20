@@ -6,12 +6,14 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
     bool has_found = false;
     for (auto c : s)
     {
+        // Verifica se há delimitadores no histórico
         if (automaton->char_history.find(c) != std::string::npos && automaton->char_history.size() != 1)
         {
             int rollback = 0;
             size_t char_index = automaton->char_history.find(c);
             size_t buffer_size = automaton->char_history.size();
 
+            // Verifica qual tipo de delimitador foi encontrado
             if (automaton->char_history.size() > 1 &&
                 ((automaton->char_history[0] == ':' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '<' && automaton->char_history[1] == '=') || (automaton->char_history[0] == '>' && automaton->char_history[1] == '=')))
             {
@@ -23,8 +25,13 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
             }
             else
             {
+                // Caso um delimitador seja encontrado na primeira posição, o algoritmo retorna apenas o delimitador
                 rollback = buffer_size - char_index - ((char_index == 0) ? 1 : 0);
             }
+
+            // Baseado no tipo do delimitador, corta-se todos os caracteres após esse delimitador
+            // Além disso, o ponteiro do arquivo também é revertido
+            // O delimitador escolhido, sempre é aquele mais a esquerda
 
             for (int i = 0; i < rollback; i++)
             {
@@ -32,12 +39,15 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
                 automaton->char_history.pop_back();
                 automaton->state_history.pop_back();
             }
+
+            // Performado apenas uma vez, só e somente se, há pelo menos 1 delimitador no histórico
             if (!has_found)
             {
                 file_input.unget();
                 has_found = true;
             }
 
+            // Atualiza o estado para o ultimo estado encontrado antes do delimtador
             automaton->current_state = automaton->state_history[automaton->state_history.size() - 1];
         }
     }
@@ -45,7 +55,10 @@ void branch_and_cut(Automaton *automaton, std::string s, std::ifstream &file_inp
 
 void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, std::ifstream &file_input)
 {
+    // Recorta a entrada baseada nos delimitadores
     branch_and_cut(this, ":;+-*/()=<>.{", file_input, line);
+
+    // Verifica o estado corrente
 
     Type type = Type::NONE;
     for (const auto &pair : this->StateToType)
@@ -92,6 +105,8 @@ void Automaton::analyzeHistory(unsigned int &line, std::ofstream &file_output, s
     }
 }
 
+// Printa informações de debug no terminal
+
 void Automaton::print_debug_info()
 {
     std::cout << "Current state: " << this->current_state << std::endl;
@@ -113,12 +128,16 @@ void Automaton::print_debug_info()
     std::cout << "/----/" << std::endl;
 }
 
+// Reseta o estado e limpa os históricos
+
 void Automaton::reset()
 {
     this->current_state = 0;
     this->state_history.clear();
     this->char_history.clear();
 }
+
+// Maquina de estados
 
 void Automaton::switchStateTo(char c)
 {
